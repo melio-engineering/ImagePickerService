@@ -1,6 +1,6 @@
 platform :ios, '14.0'
 
-target 'ImagePickerService' do
+target 'TestApplication' do
   use_frameworks!
   pod 'ImagePickerService', :path => '../'
 end

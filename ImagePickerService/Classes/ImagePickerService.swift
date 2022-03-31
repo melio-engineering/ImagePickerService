@@ -12,7 +12,7 @@ import Photos
 import VisionKit
 
 /// This service handles image picking and regular camera.
-class ImagePickerService: NSObject {
+public class ImagePickerService: NSObject {
     
     /// Return the photo library auth status
     class var photoAuthorizationStatus: PHAuthorizationStatus {
@@ -48,14 +48,14 @@ class ImagePickerService: NSObject {
         case .camera where useNativeScanner == false:
             return UIImagePickerController.isSourceTypeAvailable(.camera)
         case .camera where useNativeScanner == true:
-            return VNDocumentCameraViewController.isSupported
+            return VNDocumentCameraViewController.isSupported && UIImagePickerController.isSourceTypeAvailable(.camera)
         default:
             return true
         }
     }
     
     //MARK: - Publisher
-    class func runImagePickingService(withSource source: ImagePickerServiceSource,
+    public class func runImagePickingService(withSource source: ImagePickerServiceSource,
                                       permissionController: PermissionedViewController? = nil,
                                       fromController controller: UIViewController) -> Future<UIImage?, Error> {
         service = ImagePickerService(withSource: source)
@@ -332,12 +332,12 @@ private extension ImagePickerService {
 
 //MARK: - UIImagePickerControllerDelegate, UINavigationControllerDelegate
 extension ImagePickerService: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+    public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         logSubject.send(("User canceled the image picker", .info))
         sendCompletion()
     }
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+    public func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         guard let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage else  {
             sendFailure(withError: ImagePickerServiceError.imageDoesNotExist)
             return
@@ -351,7 +351,7 @@ extension ImagePickerService: UIImagePickerControllerDelegate, UINavigationContr
 extension ImagePickerService: VNDocumentCameraViewControllerDelegate {
     // The client is responsible for dismissing the document camera in these callbacks.
     // The delegate will receive one of the following calls, depending whether the user saves or cancels, or if the session fails.
-    func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan) {
+    public func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan) {
         logSubject.send(("User completed a scan with \(scan.pageCount) pages", .info))
         guard scan.pageCount > 0 else {
             sendFailure(withError: ImagePickerServiceError.emptyScan)
@@ -362,13 +362,13 @@ extension ImagePickerService: VNDocumentCameraViewControllerDelegate {
     }
     
     // The delegate will receive this call when the user cancels.
-    func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
+    public func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
         logSubject.send(("User canceled the scanner", .info))
         sendCompletion()
     }
 
     // The delegate will receive this call when the user is unable to scan, with the following error.
-    func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
+    public func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
         sendFailure(withError: error)
     }
 }

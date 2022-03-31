@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  ImagePickerService
+//  TestApplication
 //
 //  Created by Sion Sasson on 31/03/2022.
 //
