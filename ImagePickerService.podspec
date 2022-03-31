@@ -17,7 +17,7 @@ It handles the whole process inculding:
   s.homepage         = 'https://github.com/melio-engineering/ImagePickerService'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'Sion Sasson' => 'sion.sasson@melio.com' }
-  s.source           = { :git => 'https://github.com/Sion Sasson/ImagePickerService.git', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/melio-engineering/ImagePickerService.git', :tag => s.version.to_s }
 
   s.ios.deployment_target = '14.0'
   s.swift_versions = ['5.0']
