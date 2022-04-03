@@ -13,6 +13,7 @@ class ViewController: UIViewController {
     
     //MARK: - Private variables
     @IBOutlet private weak var imageView: UIImageView!
+    @IBOutlet private weak var errorLabel: UILabel!
     private var anyCancellables: Set<AnyCancellable> = []
     
     //MARK: - Overrides
@@ -32,7 +33,7 @@ class ViewController: UIViewController {
 
 private extension ViewController {
     func runService(withSource source: ImagePickerServiceSource) {
-        
+        errorLabel.text = nil
         ImagePickerService.runImagePickingService(withSource: source,
                                                   permissionController: PermissionViewController(),
                                                   fromController: self)
@@ -41,9 +42,7 @@ private extension ViewController {
             case .finished:
                 break
             case .failure(let error):
-                let alert = UIAlertController.init(title: nil, message: error.localizedDescription, preferredStyle: .alert)
-                alert.addAction(.init(title: "Ok", style: .destructive))
-                present(alert, animated: true)
+                errorLabel.text = error.localizedDescription
             }
         } receiveValue: { [unowned self] image in
             imageView.image = image
