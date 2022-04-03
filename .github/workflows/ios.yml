@@ -16,10 +16,10 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Xcode Select
-        uses: devbotsxyz/xcode-select@v1.1.0
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Force Xcode 11
+        run: sudo xcode-select -switch /Applications/Xcode_11.3.app
       - name: Test
         run: |
           xcodebuild test -scheme TestApplication -workspace TestApplication.xcworkspace -destination "platform=iOS Simulator,name=iPhone 13"
