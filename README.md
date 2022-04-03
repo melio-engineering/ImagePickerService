@@ -1,6 +1,5 @@
 # ImagePickerService
 
-[![CI Status](https://img.shields.io/travis/Sion Sasson/ImagePickerService.svg?style=flat)](https://travis-ci.org/Sion Sasson/ImagePickerService)
 [![Version](https://img.shields.io/cocoapods/v/ImagePickerService.svg?style=flat)](https://cocoapods.org/pods/ImagePickerService)
 [![License](https://img.shields.io/cocoapods/l/ImagePickerService.svg?style=flat)](https://cocoapods.org/pods/ImagePickerService)
 [![Platform](https://img.shields.io/cocoapods/p/ImagePickerService.svg?style=flat)](https://cocoapods.org/pods/ImagePickerService)
