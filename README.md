@@ -4,6 +4,7 @@
 [![Version](https://img.shields.io/cocoapods/v/ImagePickerService.svg?style=flat)](https://cocoapods.org/pods/ImagePickerService)
 [![License](https://img.shields.io/cocoapods/l/ImagePickerService.svg?style=flat)](https://cocoapods.org/pods/ImagePickerService)
 [![Platform](https://img.shields.io/cocoapods/p/ImagePickerService.svg?style=flat)](https://cocoapods.org/pods/ImagePickerService)
+[![MobSF](https://github.com/melio-engineering/ImagePickerService/actions/workflows/mobsf.yml/badge.svg?branch=main)](https://github.com/melio-engineering/ImagePickerService/actions/workflows/mobsf.yml)
 
 ## Example
 
