@@ -20,6 +20,5 @@ lane :tests do
   cocoapods
 
   run_tests(workspace: "TestApplication.xcworkspace",
-            devices: ["iPhone 13"],
             scheme: "TestApplication")
 end
