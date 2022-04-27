@@ -42,4 +42,5 @@ public enum ImagePickerServiceError: Error {
     case unknownPermissionState
     case unknownError
     case emptyScan
+    case cancelledByUser
 }

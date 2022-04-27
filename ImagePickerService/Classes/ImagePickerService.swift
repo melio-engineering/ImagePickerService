@@ -56,8 +56,8 @@ public class ImagePickerService: NSObject {
     
     //MARK: - Publisher
     public class func runImagePickingService(withSource source: ImagePickerServiceSource,
-                                      permissionController: PermissionedViewController? = nil,
-                                      fromController controller: UIViewController) -> Future<UIImage?, Error> {
+                                             permissionController: PermissionedViewController? = nil,
+                                             fromController controller: UIViewController) -> Future<UIImage?, Error> {
         service = ImagePickerService(withSource: source)
         
         service?.permissionController = permissionController
@@ -91,7 +91,7 @@ public class ImagePickerService: NSObject {
     ///   - source: Which source are we using... supports camera and library at the moment
     ///   - mediaTypes: Which media type we support? default is `kUTTypeImage`
     private init(withSource source: ImagePickerServiceSource = .library,
-         mediaTypes: [String] = [kUTTypeImage as String]) {
+                 mediaTypes: [String] = [kUTTypeImage as String]) {
         self.mediaTypes = mediaTypes
         self.source = source
         super.init()
@@ -120,7 +120,7 @@ private extension ImagePickerService {
             checkCameraPermission()
         }
     }
-
+    
     func checkCameraPermission() {
         let cameraAuthorizationStatus = ImagePickerService.cameraAuthorizationStatus
         logSubject.send(("Camera current permission is \(cameraAuthorizationStatus)", .info))
@@ -171,10 +171,7 @@ private extension ImagePickerService {
     /// - Parameter error: Which error occoured
     func sendFailure(withError error: Error) {
         logSubject.send(("Image picker service: \(source) completed with failure - due to \(error)", .error))
-        Just(true)
-            .flatMap { [unowned self] _ -> Future<UIImage?, Never> in
-                dismissIfNeeded(withImage: nil)
-            }
+        dismissIfNeeded()
             .sink(receiveCompletion: { [weak self] _ in
                 self?.serviceFinished.send(completion: Subscribers.Completion.failure(error))
             }, receiveValue: { _ in })
@@ -182,15 +179,13 @@ private extension ImagePickerService {
     }
     
     /// Send completion publish with selected image
-    /// - Parameter image: The image the selected
-    func sendCompletion(withImage image: UIImage? = nil) {
+    /// - Parameter image: The image the user selected
+    func sendCompletion(withImage image: UIImage) {
         logSubject.send(("Image picker service completed", .info))
-        Just(image)
-            .flatMap { [unowned self] image -> Future<UIImage?, Never> in
-                dismissIfNeeded(withImage: image)
-            }
+        serviceFinished.send(image)
+        
+        dismissIfNeeded()
             .sink(receiveCompletion: { [weak self] _ in
-                if let image = image { self?.serviceFinished.send(image) }
                 self?.serviceFinished.send(completion: Subscribers.Completion.finished)
             }, receiveValue: { _ in })
             .store(in: &anyCancellables)
@@ -221,7 +216,7 @@ private extension ImagePickerService {
         
         imagePickerViewController.dismissedByUser
             .sink { [weak self] _ in
-                self?.sendCompletion()
+                self?.sendFailure(withError: ImagePickerServiceError.cancelledByUser)
             }
             .store(in: &anyCancellables)
         
@@ -244,17 +239,14 @@ private extension ImagePickerService {
         presentedController = documentCameraViewController
     }
     
-    /// If the service presented a controller it will dismiss it before completing...
-    /// - Parameter image: The output of the service.. once it completes the dismissing it will publish the image
-    /// - Returns: Future publisher to notify when the dismiss was done...
-    func dismissIfNeeded(withImage image: UIImage?) -> Future<UIImage?, Never> {
+    func dismissIfNeeded() -> Future<Void, Never> {
         Future() { [weak self] promise in
             switch self?.presentedController {
             case nil:
-                promise(.success(image))
+                promise(.success(()))
             case _:
                 self?.presentingController?.dismiss(animated: true, completion: {
-                    promise(.success(image))
+                    promise(.success(()))
                 })
             }
         }
@@ -275,7 +267,7 @@ private extension ImagePickerService {
                 case .dontAllow:
                     self?.sendFailure(withError: ImagePickerServiceError.missingPermission)
                 case .close:
-                    self?.sendCompletion()
+                    self?.sendFailure(withError: ImagePickerServiceError.cancelledByUser)
                 case .allow where self?.source == .library:
                     self?.requestLibraryAuthorization()
                 case .allow where self?.source == .camera:
@@ -283,16 +275,17 @@ private extension ImagePickerService {
                 default:
                     //Not support to be here...
                     assert(true, "You shouldn't be here")
-                    self?.sendCompletion()
+                    self?.sendFailure(withError: ImagePickerServiceError.unknownError)
                 }
             }
             .store(in: &anyCancellables)
         
-        controller.modalTransitionStyle = .crossDissolve
-        controller.modalPresentationStyle = .fullScreen
+        let navigationController = UINavigationController(rootViewController: controller)
+        navigationController.modalTransitionStyle = .crossDissolve
+        navigationController.modalPresentationStyle = .fullScreen
         
-        presentingController?.present(controller, animated: true)
-        presentedController = controller
+        presentingController?.present(navigationController, animated: true)
+        presentedController = navigationController
         
         return true
     }
@@ -306,7 +299,6 @@ private extension ImagePickerService {
         PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] status in
             self?.logSubject.send(("New library permission status: \(status)", .info))
             DispatchQueue.main.async {
-                
                 switch status {
                 case .limited, .authorized:
                     self?.presentUI()
@@ -334,7 +326,7 @@ private extension ImagePickerService {
 extension ImagePickerService: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         logSubject.send(("User canceled the image picker", .info))
-        sendCompletion()
+        sendFailure(withError: ImagePickerServiceError.cancelledByUser)
     }
     
     public func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
@@ -348,6 +340,7 @@ extension ImagePickerService: UIImagePickerControllerDelegate, UINavigationContr
     }
 }
 
+//MARK: - VNDocumentCameraViewControllerDelegate
 extension ImagePickerService: VNDocumentCameraViewControllerDelegate {
     // The client is responsible for dismissing the document camera in these callbacks.
     // The delegate will receive one of the following calls, depending whether the user saves or cancels, or if the session fails.
@@ -364,9 +357,9 @@ extension ImagePickerService: VNDocumentCameraViewControllerDelegate {
     // The delegate will receive this call when the user cancels.
     public func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
         logSubject.send(("User canceled the scanner", .info))
-        sendCompletion()
+        sendFailure(withError: ImagePickerServiceError.cancelledByUser)
     }
-
+    
     // The delegate will receive this call when the user is unable to scan, with the following error.
     public func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
         sendFailure(withError: error)

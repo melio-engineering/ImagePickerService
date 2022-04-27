@@ -54,15 +54,25 @@ class TestApplicationUITests: XCTestCase {
         }
         app.tap()
         
-        let exp = expectation(description: "\(#function)\(#line)")
+        //Wait for image picker to appear
+        let exp1 = expectation(description: "\(#function)\(#line)")
         
         let image = app.scrollViews.otherElements.images.firstMatch
         if image.waitForExistence(timeout: 5) {
             image.tap()
-            exp.fulfill()
+            exp1.fulfill()
         }
 
-        wait(for: [exp], timeout: 5)
+        //Wait for image to appear
+        let exp2 = expectation(description: "\(#function)\(#line)")
+        
+        let imageview = app.images["image"]
+        if imageview.waitForExistence(timeout: 5) {
+            XCTAssertNotNil(imageview.images)
+            exp2.fulfill()
+        }
+        
+        wait(for: [exp1, exp2], timeout: 5)
     }
     
     func testOpenCameraFlow() throws {
@@ -80,7 +90,25 @@ class TestApplicationUITests: XCTestCase {
         app.launch()
 
         app.staticTexts["Pick image"].tap()
-        app.staticTexts["Close"].tap()
-        XCTAssertEqual(app.staticTexts.element(matching:.any, identifier: "error").label, "The operation couldn’t be completed. (ImagePickerService.ImagePickerServiceError error 4.)")
+        
+        //Wait for the close button to appear
+        let exp1 = expectation(description: "\(#function)\(#line)")
+        
+        let closeButton = app.staticTexts["Close"]
+        if closeButton.waitForExistence(timeout: 5) {
+            closeButton.tap()
+            exp1.fulfill()
+        }
+        
+        //Check for the right error
+        let exp2 = expectation(description: "\(#function)\(#line)")
+        
+        let label = app.staticTexts.element(matching:.any, identifier: "error")
+        if label.waitForExistence(timeout: 5) {
+            XCTAssertEqual(label.label, "The operation couldn’t be completed. (ImagePickerService.ImagePickerServiceError error 6.)")
+            exp2.fulfill()
+        }
+        
+        wait(for: [exp1, exp2], timeout: 5)
     }
 }
