@@ -15,19 +15,18 @@ import VisionKit
 public class ImagePickerService: NSObject {
     
     /// Return the photo library auth status
-    class var photoAuthorizationStatus: PHAuthorizationStatus {
+    public class var photoAuthorizationStatus: PHAuthorizationStatus {
         PHPhotoLibrary.authorizationStatus(for: .readWrite)
     }
     
     /// Return the current camera authorization status
-    class var cameraAuthorizationStatus: AVAuthorizationStatus {
+    public class var cameraAuthorizationStatus: AVAuthorizationStatus {
         AVCaptureDevice.authorizationStatus(for: .video)
     }
     
     //Publisher that sends log strings with log type.. You can subscribe to it and add it to you log system
     var logSubject: PassthroughSubject<ServiceLog, Never> = PassthroughSubject<ServiceLog, Never>()
     /// Setting this to `True` will use the `VNDocumentCameraViewController` to capture image when using the camera source
-    var useNativeScanner: Bool = false
     
     //MARK: - Private class variables
     private static var service: ImagePickerService?
@@ -54,6 +53,7 @@ public class ImagePickerService: NSObject {
         }
     }
     private let navigationControllerClass: UINavigationController.Type
+    private let useNativeScanner: Bool
     
     //MARK: - Publisher
     /// Run the image picker service and get back a publisher that will return an image picked by the user or an `Error`
@@ -62,10 +62,12 @@ public class ImagePickerService: NSObject {
     ///   - navigationControllerClass: The `UINavigationContorller` class this service will use. The default is the regular UINavigation controller
     ///   - permissionController: The controller you want to show in case you want to present the user some UI before requesting permission OR if the the user decline the permission
     ///   - controller: Who's running this service?
+    ///   - useNativeScanner: If value is `true` the service will use the default native scanner (like in the notes application). If `false` it will use the regular camera
     /// - Returns: `AnyPublisher` that will return the `UIImage` in all checks out or an error if not.
     public class func runImagePickingService(withSource source: ImagePickerServiceSource,
                                              navigationControllerClass: UINavigationController.Type = UINavigationController.self,
                                              permissionController: PermissionedViewController? = nil,
+                                             useNativeScanner: Bool = false,
                                              fromController controller: UIViewController) -> AnyPublisher<UIImage, Error> {
         service = ImagePickerService(withSource: source)
         
@@ -102,7 +104,9 @@ public class ImagePickerService: NSObject {
     ///   - mediaTypes: Which media type we support? default is `kUTTypeImage`
     private init(withSource source: ImagePickerServiceSource = .library,
                  navigationControllerClass: UINavigationController.Type = UINavigationController.self,
+                 useNativeScanner: Bool = false,
                  mediaTypes: [String] = [kUTTypeImage as String]) {
+        self.useNativeScanner = useNativeScanner
         self.navigationControllerClass = navigationControllerClass
         self.mediaTypes = mediaTypes
         self.source = source
