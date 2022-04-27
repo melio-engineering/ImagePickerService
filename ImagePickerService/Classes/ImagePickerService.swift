@@ -33,8 +33,8 @@ public class ImagePickerService: NSObject {
     private static var service: ImagePickerService?
     
     //MARK: - Private variables
-    private var serviceFinished: PassthroughSubject<UIImage?, Error> = PassthroughSubject<UIImage?, Error>()
-    private var pickerDismissedSubject: PassthroughSubject<Void, Error> = PassthroughSubject<Void, Error>()
+    private var serviceFinished: PassthroughSubject<UIImage, Error> = .init()
+    private var pickerDismissedSubject: PassthroughSubject<Void, Error> = .init()
     private var anyCancellables: Set<AnyCancellable> = []
     private var permissionController: PermissionedViewController?
     private weak var presentedController: UIViewController?
@@ -53,11 +53,20 @@ public class ImagePickerService: NSObject {
             return true
         }
     }
+    private let navigationControllerClass: UINavigationController.Type
     
     //MARK: - Publisher
+    /// Run the image picker service and get back a publisher that will return an image picked by the user or an `Error`
+    /// - Parameters:
+    ///   - source: What's the source you wish to run?
+    ///   - navigationControllerClass: The `UINavigationContorller` class this service will use. The default is the regular UINavigation controller
+    ///   - permissionController: The controller you want to show in case you want to present the user some UI before requesting permission OR if the the user decline the permission
+    ///   - controller: Who's running this service?
+    /// - Returns: `AnyPublisher` that will return the `UIImage` in all checks out or an error if not.
     public class func runImagePickingService(withSource source: ImagePickerServiceSource,
+                                             navigationControllerClass: UINavigationController.Type = UINavigationController.self,
                                              permissionController: PermissionedViewController? = nil,
-                                             fromController controller: UIViewController) -> Future<UIImage?, Error> {
+                                             fromController controller: UIViewController) -> AnyPublisher<UIImage, Error> {
         service = ImagePickerService(withSource: source)
         
         service?.permissionController = permissionController
@@ -83,6 +92,7 @@ public class ImagePickerService: NSObject {
             
             service?.start(fromController: controller)
         }
+        .eraseToAnyPublisher()
     }
     
     //MARK: - Initializer
@@ -91,7 +101,9 @@ public class ImagePickerService: NSObject {
     ///   - source: Which source are we using... supports camera and library at the moment
     ///   - mediaTypes: Which media type we support? default is `kUTTypeImage`
     private init(withSource source: ImagePickerServiceSource = .library,
+                 navigationControllerClass: UINavigationController.Type = UINavigationController.self,
                  mediaTypes: [String] = [kUTTypeImage as String]) {
+        self.navigationControllerClass = navigationControllerClass
         self.mediaTypes = mediaTypes
         self.source = source
         super.init()
@@ -280,7 +292,7 @@ private extension ImagePickerService {
             }
             .store(in: &anyCancellables)
         
-        let navigationController = UINavigationController(rootViewController: controller)
+        let navigationController = navigationControllerClass.self.init(rootViewController: controller)
         navigationController.modalTransitionStyle = .crossDissolve
         navigationController.modalPresentationStyle = .fullScreen
         
