@@ -21,6 +21,41 @@ it, simply add the following line to your Podfile:
 pod 'ImagePickerService'
 ```
 
+## How to use?
+
+That's simple :)
+
+```swift
+//PermissionedViewController is a UIViewController that conforms to PermissionViewControllerProtocol
+let permissionController: PermissionedViewController = ....
+let presentingController: UIViewController = ....
+let source: ImagePickerServiceSource = ... //Camera or library
+
+ImagePickerService.runImagePickingService(withSource: source,
+                                          permissionController: permissionController,
+                                          fromController: presentingController)
+.sink { completion in
+    switch completion {
+    case .failure(let error):
+        //got an error - oh boy...
+        break
+    case .finished:
+        //service is done with flying colors..
+        break
+    }
+} receiveValue: { image in
+    //User selected/scanned/took picture an image
+}
+.store(in: &anyCancellables)
+```
+
+## Do you want to use the iOS native scanner?
+
+Easy... simply run the service with the parameter 
+```swift
+useNativeScanner = true
+```
+
 ## Author
 
 Sion Sasson, sion.sasson@melio.com
