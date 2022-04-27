@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'ImagePickerService'
-  s.version          = '1.0.0'
+  s.version          = '1.0.1'
   s.summary          = 'A delightful image picker service for iOS 14 and up - including scanning option'
 
   s.description      = <<-DESC
