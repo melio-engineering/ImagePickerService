@@ -10,6 +10,7 @@ import UIKit
 import MobileCoreServices
 import Photos
 import VisionKit
+import OSLog
 
 /// This service handles image picking and regular camera.
 public class ImagePickerService: NSObject {
@@ -23,11 +24,7 @@ public class ImagePickerService: NSObject {
     public class var cameraAuthorizationStatus: AVAuthorizationStatus {
         AVCaptureDevice.authorizationStatus(for: .video)
     }
-    
-    //Publisher that sends log strings with log type.. You can subscribe to it and add it to you log system
-    var logSubject: PassthroughSubject<ServiceLog, Never> = PassthroughSubject<ServiceLog, Never>()
-    /// Setting this to `True` will use the `VNDocumentCameraViewController` to capture image when using the camera source
-    
+
     //MARK: - Private class variables
     private static var service: ImagePickerService?
     
@@ -54,6 +51,7 @@ public class ImagePickerService: NSObject {
     }
     private let navigationControllerClass: UINavigationController.Type
     private let useNativeScanner: Bool
+    private let logSubject: PassthroughSubject<ServiceLog, Never> = .init()
     
     //MARK: - Publisher
     /// Run the image picker service and get back a publisher that will return an image picked by the user or an `Error`
@@ -111,6 +109,7 @@ public class ImagePickerService: NSObject {
         self.mediaTypes = mediaTypes
         self.source = source
         super.init()
+        addSubsribers()
     }
 }
 
@@ -135,6 +134,14 @@ private extension ImagePickerService {
         case .camera:
             checkCameraPermission()
         }
+    }
+    
+    func addSubsribers() {
+        logSubject
+            .sink { string, logType in
+                os_log("%@", log: OSLog.service, type: logType, string)
+            }
+            .store(in: &anyCancellables)
     }
     
     func checkCameraPermission() {

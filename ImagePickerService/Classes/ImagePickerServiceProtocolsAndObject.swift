@@ -13,6 +13,11 @@ import OSLog
 public typealias PermissionedViewController = PermissionViewControllerProtocol & UIViewController
 public typealias ServiceLog = (String, OSLogType)
 
+extension OSLog {
+    private static var subsystem = Bundle.main.bundleIdentifier!
+    static let service = OSLog(subsystem: subsystem, category: "image_picker_service")
+}
+
 public enum PermissionViewControllerAction {
     case close
     case allow
