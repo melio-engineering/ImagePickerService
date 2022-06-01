@@ -9,10 +9,10 @@ import UIKit
 import ImagePickerService
 import Combine
 
-class PermissionViewController: PermissionedViewController {
+class PermissionViewController: ImagePickerServicePermissionedViewController {
     
     //MARK: - PermissionedViewController
-    var actionTapSubject: PassthroughSubject<PermissionViewControllerAction, Never> = PassthroughSubject<PermissionViewControllerAction, Never>()
+    var actionTapSubject: PassthroughSubject<ImagePickerServicePermissionAction, Never> = PassthroughSubject<ImagePickerServicePermissionAction, Never>()
     var source: ImagePickerServiceSource!
     
 

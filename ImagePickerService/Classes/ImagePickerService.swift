@@ -32,7 +32,7 @@ public class ImagePickerService: NSObject {
     private var serviceFinished: PassthroughSubject<UIImage, Error> = .init()
     private var pickerDismissedSubject: PassthroughSubject<Void, Error> = .init()
     private var anyCancellables: Set<AnyCancellable> = []
-    private var permissionController: PermissionedViewController?
+    private var permissionController: ImagePickerServicePermissionedViewController?
     private weak var presentedController: UIViewController?
     private weak var presentingController: UIViewController?
     private let source: ImagePickerServiceSource
@@ -64,7 +64,7 @@ public class ImagePickerService: NSObject {
     /// - Returns: `AnyPublisher` that will return the `UIImage` in all checks out or an error if not.
     public class func runImagePickingService(withSource source: ImagePickerServiceSource,
                                              navigationControllerClass: UINavigationController.Type = UINavigationController.self,
-                                             permissionController: PermissionedViewController? = nil,
+                                             permissionController: ImagePickerServicePermissionedViewController? = nil,
                                              useNativeScanner: Bool = false,
                                              fromController controller: UIViewController) -> AnyPublisher<UIImage, Error> {
         service = ImagePickerService(withSource: source)

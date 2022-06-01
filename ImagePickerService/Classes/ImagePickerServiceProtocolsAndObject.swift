@@ -10,7 +10,7 @@ import UIKit
 import OSLog
 
 //MARK: - Typealiases that the service uses
-public typealias PermissionedViewController = PermissionViewControllerProtocol & UIViewController
+public typealias ImagePickerServicePermissionedViewController = ImagePickerServicePermissionViewControllerProtocol & UIViewController
 public typealias ServiceLog = (String, OSLogType)
 
 extension OSLog {
@@ -18,7 +18,7 @@ extension OSLog {
     static let service = OSLog(subsystem: subsystem, category: "image_picker_service")
 }
 
-public enum PermissionViewControllerAction {
+public enum ImagePickerServicePermissionAction {
     case close
     case allow
     case dontAllow
@@ -26,9 +26,9 @@ public enum PermissionViewControllerAction {
 }
 
 /// The protocol of the auth contorller with the needed functions and action
-public protocol PermissionViewControllerProtocol {
+public protocol ImagePickerServicePermissionViewControllerProtocol {
     /// Publisher that show which action the user chose...
-    var actionTapSubject: PassthroughSubject<PermissionViewControllerAction, Never> { get }
+    var actionTapSubject: PassthroughSubject<ImagePickerServicePermissionAction, Never> { get }
     /// The source of the permission we're displaying - probably will change the message
     var source: ImagePickerServiceSource! { get set }
 }
