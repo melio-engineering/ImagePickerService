@@ -268,7 +268,7 @@ private extension ImagePickerService {
             case nil:
                 promise(.success(()))
             case _:
-                self?.presentingController?.dismiss(animated: true, completion: {
+                self?.presentedController?.dismiss(animated: true, completion: {
                     promise(.success(()))
                 })
             }
