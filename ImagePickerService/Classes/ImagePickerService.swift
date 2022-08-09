@@ -52,6 +52,8 @@ public class ImagePickerService: NSObject {
     private let navigationControllerClass: UINavigationController.Type
     private let useNativeScanner: Bool
     private let logSubject: PassthroughSubject<ServiceLog, Never> = .init()
+    private var requestedCameraPermissionSubject: PassthroughSubject<Bool, Never>?
+    private var requestedLibraryPermissionSubject: PassthroughSubject<Bool, Never>?
     
     //MARK: - Publisher
     /// Run the image picker service and get back a publisher that will return an image picked by the user or an `Error`
@@ -66,9 +68,12 @@ public class ImagePickerService: NSObject {
                                              navigationControllerClass: UINavigationController.Type = UINavigationController.self,
                                              permissionController: ImagePickerServicePermissionedViewController? = nil,
                                              useNativeScanner: Bool = false,
+                                             requestedCameraPermissionSubject: PassthroughSubject<Bool, Never> = .init(),
+                                             requestedLibraryPermissionSubject: PassthroughSubject<Bool, Never> = .init(),
                                              fromController controller: UIViewController) -> AnyPublisher<UIImage, Error> {
         service = ImagePickerService(withSource: source)
-        
+        service?.requestedCameraPermissionSubject = requestedCameraPermissionSubject
+        service?.requestedLibraryPermissionSubject = requestedLibraryPermissionSubject
         service?.permissionController = permissionController
         service?.permissionController?.source = source
         
@@ -268,7 +273,7 @@ private extension ImagePickerService {
             case nil:
                 promise(.success(()))
             case _:
-                self?.presentedController?.dismiss(animated: true, completion: {
+                self?.presentingController?.dismiss(animated: true, completion: {
                     promise(.success(()))
                 })
             }
@@ -324,8 +329,10 @@ private extension ImagePickerService {
             DispatchQueue.main.async {
                 switch status {
                 case .limited, .authorized:
+                    self?.requestedLibraryPermissionSubject?.send(true)
                     self?.presentUI()
                 default:
+                    self?.requestedLibraryPermissionSubject?.send(false)
                     self?.sendFailure(withError: ImagePickerServiceError.missingPermission)
                 }
             }
@@ -339,6 +346,7 @@ private extension ImagePickerService {
         AVCaptureDevice.requestAccess(for: .video) { [weak self] authorized in
             self?.logSubject.send(("New camera permission: \(authorized ? "authorized" : "not authorized")", .info))
             DispatchQueue.main.async {
+                self?.requestedCameraPermissionSubject?.send(authorized)
                 authorized ? self?.presentUI() : self?.sendFailure(withError: ImagePickerServiceError.missingPermission)
             }
         }
